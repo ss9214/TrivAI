@@ -22,9 +22,10 @@ Our project is called TrivAI. TrivAI is a trivia-based game that allows users to
 ### <ins>How we built it</ins>
 We wanted to use React on our frontend, which is great for interactive web-based games. Our goal was to make a clean, detailed, scalable frontend for our game. We decided to use FastAPI with AWS for our backend, for our document, user, and game storage. Our backend handles all of the heavy computation, changes to the game state and player states, as well as any document uploading. Our genAI component was built with OpenAI, Langchain, VertexAI, and pandas. 
 ### <ins>Challenges we ran into</ins>
-
+ur mom
 ### <ins>Accomplishments that we're proud of</ins>
-
+Nothing
 ### <ins>What we learned</ins>
-
+Absolutely Nothing
 ### <ins>What's next for TrivAI</ins>
+Most certainly absolutely nothing
