@@ -1,3 +1,5 @@
+##TrivAI
+
 ## Inspiration
 Our inspiration came from playing lots and lots of jackbox, as well as our kahoot days from high school! We know that many high school teachers find it hard to make kahoots for their classes, especially those with hard topics, so we wanted to create an easy, interactive, and scalable way for teachers to quiz their students, not to mention students themselves can use this game to study!
 ## What it does
