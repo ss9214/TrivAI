@@ -1,4 +1,19 @@
 ## Welcome to [TrivAI](https://www.trivai.co)!
+### <ins>How to run it on your own device</ins>
+
+Enter the terminal on your local device and run the command 
+```git clone https://github.com/ss9214/TrivAI.git```
+
+#### Backend
+1. First, enter the backend directory
+2. Start the server with the command ```node server.js```
+3. That's it! Your backend is setup!
+   
+#### Frontend
+1. First, enter the frontend directory
+2. Install dependencies with the command ```npm install```
+3. Run the server with ```npm start```
+4. You are all set! You can access the project with the link ```http://localhost:3000/```
 
 ### <ins>Inspiration</ins>
 Our inspiration came from playing lots and lots of jackbox, as well as our kahoot days from high school! We know that many high school teachers find it hard to make kahoots for their classes, especially those with hard topics, so we wanted to create an easy, interactive, and scalable way for teachers to quiz their students, not to mention students themselves can use this game to study!
