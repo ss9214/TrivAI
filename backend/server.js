@@ -255,6 +255,7 @@ app.get("/api/game/gameState/:gameId", (req, res) => {
     if (results.length > 0) {
       gameState = results[0];
       gameState.userStatuses = Object.values(results[0].userStatuses) || [];
+      console.log(gameState);
       res.status(200).json({ success: true, gameState: gameState }); // Return the game state
     } else {
       res.status(404).json({ success: false, message: "Game not found" }); // Handle case where game is not found
@@ -275,6 +276,17 @@ app.post("/api/game/start", (req, res) => {
       gameState = results[0];
       gameState.userStatuses = Object.values(results[0].userStatuses) || [];
       gameState.status = "active";
+      const updateGsQuery = "UPDATE gameState SET status = ? WHERE code = ?";
+      connection.execute(
+        updateGsQuery,
+        ["active", gameId],
+        (err, updateResults) => {
+          if (err) {
+            console.error("Error updating data: " + err.stack);
+            return res.status(500).json({ error: "Error updating data" });
+          }
+        }
+      );
       console.log(gameState)
       res.status(200).json({ success: true, gameState: gameState }); // Return the game state
     } else {
