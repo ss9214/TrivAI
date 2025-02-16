@@ -1,8 +1,11 @@
+export type Status = "idle" | "active" | "completed";
+
 export interface GameState {
   question_index: number;
   questionDisplay: QuestionDisplay;
-  userStatuses: UserState[];
+  userStatuses: UserStatus[];
   owner: string;
+  status: Status;
 }
 
 export interface QuestionDisplay {
@@ -10,10 +13,11 @@ export interface QuestionDisplay {
   options: string[];
 }
 
-export interface UserState {
+export interface UserStatus {
   userId: string;
   name: string;
   lifePoints: number;
+  rank: number;
   answer?: Answer;
 }
 

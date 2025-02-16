@@ -1,0 +1,33 @@
+.game-end {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.game-end-info {
+  display: flex;
+  align-items: flex-end;
+}
+
+.leaderboard {
+  display: flex;
+  align-items: flex-end;
+}
+
+.leaderboard-bar {
+  display: block;
+}
+
+.leaderboard-bar-box {
+  background-color: #334155;
+  margin: 0px 8px;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 8px;
+}
