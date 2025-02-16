@@ -1,4 +1,4 @@
-from openai import OpenAI
+import openai
 from typing import List, Dict, Any
 import json
 import os
@@ -6,67 +6,29 @@ from dotenv import load_dotenv
 import requests
 import io
 from PyPDF2 import PdfReader
-from io import StringIO
 import argparse
 
 class QuizGenerator:
     def __init__(self, api_key: str = None):
         """Initialize the QuizGenerator with OpenAI API key."""
-        # Load environment variables from .env file
         load_dotenv()
-        
-        # Try to get API key from parameter, then environment variable
         self.api_key = api_key or os.getenv('OPENAI_API_KEY')
         if not self.api_key:
-            raise ValueError("OpenAI API key is required. Set OPENAI_API_KEY environment variable or pass it to the constructor.")
-        self.client = OpenAI(api_key=self.api_key)
+            raise ValueError("OpenAI API key is required.")
+        self.client = openai.OpenAI(api_key=self.api_key)
 
-    def extract_text_from_pdf_url(self, pdf_url: str = "https://arxiv.org/pdf/2007.10760") -> str:
+    def generate_quiz(self, document_text: str, num_questions: int) -> List[Dict[str, Any]]:
         """
-        Download and extract text from a PDF file at the given URL.
+        Generate a quiz based on the provided document text.
         
         Args:
-            pdf_url (str): URL to the PDF file
-            
-        Returns:
-            str: Extracted text content from the PDF
-        """
-        try:
-            # Download the PDF file
-            response = requests.get(pdf_url)
-            response.raise_for_status()  # Raise an exception for bad status codes
-            
-            # Create a PDF reader object
-            pdf_file = io.BytesIO(response.content)
-            pdf_reader = PdfReader(pdf_file)
-            
-            # Extract text from all pages
-            text_content = []
-            for page in pdf_reader.pages:
-                text_content.append(page.extract_text())
-            
-            return "\n".join(text_content)
-            
-        except Exception as e:
-            print(f"Error processing PDF: {str(e)}")
-            raise ValueError(f"Failed to process PDF from URL: {str(e)}")
-
-    def generate_quiz(self, document_input: str, num_questions: int, is_url: bool = False) -> List[Dict[str, Any]]:
-        """
-        Generate a quiz based on the provided document text or PDF URL.
-        
-        Args:
-            document_input (str): Either the text content or a URL to a PDF file
+            document_text (str): The text content from the uploaded document
             num_questions (int): Number of questions to generate
-            is_url (bool): Whether the input is a URL to a PDF file
             
         Returns:
             List[Dict]: List of question dictionaries in the required format
         """
         try:
-            # If input is a URL, extract text from PDF
-            document_text = document_input  # Use the input directly since we already have the text
-
             # Prompt for GPT to generate quiz questions
             prompt = f"""
             Based on the following text, generate {num_questions} multiple-choice questions.
@@ -87,7 +49,7 @@ class QuizGenerator:
             response = self.client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": "You are a helpful quiz generator. Generate clear, relevant multiple-choice questions based on the provided text."},
+                    {"role": "system", "content": "You are a helpful quiz generator."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=1.0
@@ -98,17 +60,13 @@ class QuizGenerator:
             
             # Clean up the content
             content = generated_content.strip()
-            # Remove markdown code blocks if present
             content = content.replace('```json', '').replace('```', '').strip()
             
             try:
-                # Try to parse the cleaned content
                 questions = json.loads(content)
-                # Ensure we have a list of questions
                 if not isinstance(questions, list):
                     questions = [questions]
                 
-                # Convert to our expected format
                 formatted_questions = []
                 for q in questions:
                     if all(k in q for k in ['text', 'options', 'answer']):
@@ -126,7 +84,7 @@ class QuizGenerator:
 
         except Exception as e:
             print(f"Error generating quiz: {str(e)}")
-            return []
+            return {"error": str(e)}  # Return an error message as a JSON object
 
     def validate_question_format(self, question: Dict) -> bool:
         """
@@ -151,16 +109,20 @@ class QuizGenerator:
         return True
     
 
-def main(pdf_url, num_questions):
+def main(pdf_text, num_questions):
     quiz = QuizGenerator()  # Use environment variable instead of hardcoding API key
-    pdf_text = quiz.extract_text_from_pdf_url(pdf_url)
-    generated = quiz.generate_quiz(pdf_text, num_questions, is_url=False)
-    print(generated)  # Print the actual questions
+    generated = quiz.generate_quiz(pdf_text, num_questions)
+
+    # Ensure the output is valid JSON
+    try:
+        print(json.dumps(generated))  # Print the output as a JSON string
+    except Exception as e:
+        print(f"Error converting to JSON: {str(e)}")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Generate quiz from PDF URL.')
-    parser.add_argument('pdf_url', type=str, help='The URL of the PDF to extract text from')
+    parser = argparse.ArgumentParser(description='Generate quiz from PDF text.')
+    parser.add_argument('pdf_text', type=str, help='The text extracted from the PDF')
     parser.add_argument('num_questions', type=int, help='Number of questions to generate')
     
     args = parser.parse_args()
-    main(args.pdf_url, args.num_questions)
+    main(args.pdf_text, args.num_questions)

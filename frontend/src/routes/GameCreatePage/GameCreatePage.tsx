@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Typography, Button, Slider } from "@mui/material";
-import quizData from './testquiz.json';
+//import quizData from './testquiz.json';
 import "./GameCreatePage.css";
 
 function GameCreatePage() {
@@ -8,7 +8,8 @@ function GameCreatePage() {
   const [quizGenerated, setQuizGenerated] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [numQuestions, setNumQuestions] = useState<number>(5);
-
+  const [quizData, setQuizData] = useState<any>(null); // State to hold the quiz data
+  
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
       const filesArray = Array.from(event.target.files);
@@ -16,10 +17,32 @@ function GameCreatePage() {
     }
   };
 
-  const handleGenerateQuiz = () => {
-    // For now, we just set quizGenerated to true
-    setQuizGenerated(true);
-  };
+  const handleGenerateQuiz = async () => {
+    try {
+      const formData = new FormData();
+      console.log(documents);
+      formData.append('numQuestions', numQuestions.toString());
+      documents.forEach((file) => {
+        formData.append('documents', file); // Append each file to the FormData
+      });
+
+      const response = await fetch('http://localhost:5000/api/game/generate', {
+        method: 'POST',
+        body: formData, // Send the FormData
+      });
+
+      if (response.status === 200) {
+        const data = await response.json(); // Parse the JSON response
+        setQuizData(data.data); // Set the quiz data from the response
+        setQuizGenerated(true); // Set quizGenerated to true
+      } else {
+        setErrorMessage('An error occurred. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error generating quiz:', error);
+      setErrorMessage('An error occurred. Please try again.');
+    }
+  }
 
   const handleCreateGame = async () => {
     try {
@@ -36,9 +59,8 @@ function GameCreatePage() {
       });
 
       if (response.status === 200) {
+        sessionStorage.setItem('cachedGameId', code);
         // If the response is OK, navigate to the game 
-
-        // cache user = "False" so we know this is the owner's device
         window.location.href = `/game/${code}`; // Redirect to the game page
       } else {
         setErrorMessage('An error occurred. Please try again.');
@@ -92,13 +114,13 @@ function GameCreatePage() {
         )}
       </div>
       {quizGenerated && ( // Quiz preview area
-        <div style={{ flex: 1, height:"50%"}}>
+        <div style={{ flex: 1, height: "50%" }}>
           <div className="json-preview">
             <Typography variant="h6">Quiz Preview:</Typography>
-            <pre>{JSON.stringify(quizData, null, 2)}</pre>
+            <pre>{JSON.stringify(quizData, null, 2)}</pre> {/* Display the quiz data */}
           </div>
-          <div style={{textAlign:"center", width:"80vh"}}>
-            <Button variant="contained" onClick={handleCreateGame} style={{ marginTop: ".25%", marginBottom: "1.5", backgroundColor: "#1e293b"}}>
+          <div style={{ textAlign: "center", width: "80vh" }}>
+            <Button variant="contained" onClick={handleCreateGame} style={{ marginTop: ".25%", marginBottom: "1.5", backgroundColor: "#1e293b" }}>
               Create Game
             </Button>
             {errorMessage && <Typography color="error">{errorMessage}</Typography>} {/* Display error message */}

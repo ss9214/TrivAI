@@ -15,6 +15,7 @@ function GameJoinPage() {
   };
   const handleJoinGame = async () => {
     try {
+      const id = uuidv4();
       const response = await fetch('http://localhost:5000/api/game/join', {
         method: 'POST',
         headers: {
@@ -23,12 +24,13 @@ function GameJoinPage() {
         body: JSON.stringify({
           name: nameValue,
           gameId: codeValue,
-          userId: uuidv4() // cache userId
+          userId: id // cache userId
         }),
       });
 
       if (response.status === 200) {
         // If the response is OK, navigate to the game page
+        sessionStorage.setItem('userId',id);
         window.location.href = `/game/${codeValue}`; // Redirect to the game page
       } else if (response.status === 404) {
         // If the game doesn't exist
