@@ -1,9 +1,10 @@
+import { useEffect } from "react";
 import { Typography, Card, CardContent, Box, Button } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import PeopleIcon from "@mui/icons-material/People";
 import "./GameLobby.css";
 import { useAppSelector } from "../../store/hooks";
-import { gameStateStart } from "../../services";
+import { gameStateStart, getGameState } from "../../services";
 import { useDispatch } from "react-redux";
 import { setGameState } from "../../store/gameStateSlice";
 
@@ -11,6 +12,24 @@ function GameLobby() {
   const dispatch = useDispatch();
   const gameState = useAppSelector((state) => state.gameState);
   const gameId = sessionStorage.getItem("gameId");
+
+  const fetchGameState = async () => {
+    if (!gameId) return;
+    try {
+      const data = await getGameState(gameId);
+      dispatch(setGameState(data.gameState));
+    } catch (error) {
+      console.error("Error fetching game state:", error);
+    }
+  };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchGameState();
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const startGame = async (gameId: string) => {
     const data = await gameStateStart(gameId);
@@ -30,7 +49,7 @@ function GameLobby() {
       >
         <PeopleIcon style={{ marginRight: "8px" }} />
         <Typography variant="h5" style={{ fontWeight: "700" }}>
-          Players {`(${gameState?.userStatuses.length})`}
+          Players {`(${gameState?.userStatuses.length || 0})`}
         </Typography>
       </div>
       <Box
@@ -46,8 +65,10 @@ function GameLobby() {
           {gameState?.userStatuses.map((player, index) => (
             <Grid size={4} key={index}>
               <Card variant="outlined">
-                <CardContent>
-                  <Typography variant="h6">{player.name}</Typography>
+                <CardContent sx={{ padding: "16px !important" }}>
+                  <Typography variant="h6" margin={"auto"}>
+                    {player.name}
+                  </Typography>
                 </CardContent>
               </Card>
             </Grid>
