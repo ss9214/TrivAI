@@ -187,7 +187,7 @@ app.post("/api/game/join", (req, res) => {
   };
   const newPlayerGsQuery = "SELECT userStatuses from gameState WHERE code = ?";
   let ret = "";
-  connection.execute(newPlayerGsQuery, [gameId], (req, res) => {
+  connection.execute(newPlayerGsQuery, [gameId], (err, results) => {
     if (err) {
       console.error("Error checking data: " + err.stack);
       return res.status(500).json({ error: "Error checking data" });
