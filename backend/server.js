@@ -429,48 +429,62 @@ app.post("/api/game/end", (req, res) => {
 });
 
 app.post("/api/game/endQuestion", (req, res) => {
-  const { gameId, correctAnswer } = req.body;
-  const getAnswerQuery = "SELECT questions from game WHERE code = ?";
-  connection.execute(getAnswerQuery, [gameId], (err, res) => {
+  const { gameId } = req.body;
+  const getQuestionsQuery = "SELECT questions from game WHERE code = ?";
+  connection.execute(getQuestionsQuery, [gameId], (err, results) => {
     if (err) {
       console.error("Error updating data: " + err.stack);
       return res.status(500).json({ error: "Error updating data" });
     }
-    let questions = JSON.parse(results[0].questions);
-    let correctAnswerNumber = questions[questionIndex].answers;
-    let correctAnswer = questions[questionIndex].options[correctAnswerNumber];
-    const getUserStatuses = "SELECT * from gameState WHERE code = ?";
-    connection.execute(getUserStatuses, [gameId], (err, gameState) => {
-      if (err) {
-        console.error("Error updating data: " + err.stack);
-        return res.status(500).json({ error: "Error updating data" });
-      }
-
-      let correctPlayers = [];
-
-      let userStates = gameState[0].userStatuses.map((user) => {
-        if (user.answer != correctAnswerNumber) {
-          user.lifePoints -= 1000;
-        } else {
-          correctPlayers.append(user);
+    const getGameStateQuery = "SELECT * from gameState WHERE code = ?";
+    connection.execute(getGameStateQuery, [gameId],(err,results2) => {
+        if (err) {
+            console.error("Error updating data: " + err.stack);
+            return res.status(500).json({ error: "Error updating data" });
         }
-      });
-      correctPlayers.sort((a, b) => a.answerTime - b.answerTime);
-      const numPlayers = userStates.length(); //HERE
-      for (let i = 0; i < correctPlayers.length(); i++) {
-        let user = userStates.find(
-          (user) => user.name === correctPlayers[i].name
+        let gameState = results2[0]
+        let questions = JSON.parse(results[0]);
+        let correctAnswerIndex = questions[gameState.questionIndex].correctAnswer;
+
+        let correctPlayers = [];
+
+        let userStates = gameState.userStatuses.map((user) => {
+            if (user.answer != correctAnswerIndex) {
+            user.lifePoints -= 1000;
+            } else {
+            correctPlayers.append(user);
+            }
+        });
+        correctPlayers.sort((a, b) => a.answerTime - b.answerTime);
+        const numPlayers = userStates.length(); //HERE
+        for (let i = 0; i < correctPlayers.length(); i++) {
+            let user = userStates.find(
+            (user) => user.name === correctPlayers[i].name
+            );
+            user.lifePoints =
+            user.lifePoints - 500 * float((i - 1) / (numPlayers - 1));
+        }
+        userStates.sort((a, b) => a.lifePoints - b.lifePoints);
+        for (let j = 0; j < userStates.length(); j++) {
+            userStates[j].rank = j + 1;
+        }
+        gameState.userStatuses = userStates;
+        gameState.questionIndex += 1;
+        gameState.questionDisplay = {"text":questions[gameState.questionIndex].text, "options":questions[gameState.questionIndex].options}
+        const updateQuery =
+        "UPDATE gameState SET (questionDisplay,questionIndex) = (?,?) WHERE code = ?";
+        connection.execute(
+            updateQuery,
+            [gameState.questionDisplay, gameState.questionIndex, gameId],
+            (err, results3) => {
+                if (err) {
+                    console.error("Error fetching game state: " + err.stack);
+                    return res.status(500).json({ error: "Error fetching game state" });
+                }
+            }
         );
-        user.lifePoints =
-          user.lifePoints - 500 * float((i - 1) / (numPlayers - 1));
-      }
-      userStates.sort((a, b) => a.lifePoints - b.lifePoints);
-      for (let j = 0; j < userStates.length(); j++) {
-        userStates[j].rank = j + 1;
-      }
-      gameState[0].userStatuses = userStates;
-      return { correctAnswer: correctAnswer, gameState: gameState[0] };
-    });
+        return { correctAnswer: correctAnswer, gameState: gameState };
+    })
   });
 });
 
