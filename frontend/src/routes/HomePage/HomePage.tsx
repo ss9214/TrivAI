@@ -16,7 +16,7 @@ function HomePage() {
   return (
     <div className="home-layout">
       <Typography variant="h3">TrivAI</Typography>
-      <div className="game-options">
+      <div className="game-button-options">
         <div>
           <Button
             variant="contained"
