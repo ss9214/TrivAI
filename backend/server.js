@@ -216,7 +216,7 @@ app.post("/api/game/updateAnswer", (req, res) => {
   const updatePlayerAnswerQuery =
     "SELECT userStatuses from gameState WHERE code = ?";
   let temp = "";
-  connection.execute(updatePlayerAnswerQuery, [gameId], (err, results) => {
+  connection.execute(updatePlayerAnswerQuery, [gameId], (err, res) => {
     if (err) {
       console.error("Error checking data: " + err.stack);
       return res.status(500).json({ error: "Error checking data" });
