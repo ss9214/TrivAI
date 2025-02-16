@@ -205,6 +205,27 @@ app.post('/api/game/updateAnswer', (req, res) => {
   });
 });
 
+app.get('/api/game/gameState/:gameId', (req, res) => {
+  const gameId = req.params.gameId; // Get the gameId from the URL parameters
+
+  const getGameStateQuery = "SELECT * FROM gameState WHERE code = ?"; // Query to get the game state
+  connection.execute(getGameStateQuery, [gameId], (err, results) => {
+    if (err) {
+      console.error('Error fetching game state: ' + err.stack);
+      return res.status(500).json({ error: 'Error fetching game state' });
+    }
+
+    if (results.length > 0) {
+      res.status(200).json({ success: true, gameState: results[0] }); // Return the game state
+    } else {
+      res.status(404).json({ success: false, message: 'Game not found' }); // Handle case where game is not found
+    }
+  });
+});
+
+app.post('/api/game/start', (req,res) => {
+    
+})
 app.post('/api/game/endQuestion', (req, res) => {
   const {gameId, correctAnswer} = req.body;
   const getAnswerQuery = "SELECT questions from game WHERE code = ?";
