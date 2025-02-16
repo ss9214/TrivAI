@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Typography, Button, Slider } from "@mui/material";
 //import quizData from './testquiz.json';
 import "./GameCreatePage.css";
+import { v4 as uuidv4} from 'uuid';
 
 function GameCreatePage() {
   const [documents, setDocuments] = useState<File[]>([]);
@@ -47,20 +48,30 @@ function GameCreatePage() {
   const handleCreateGame = async () => {
     try {
       const code = Math.random().toString(36).substring(2, 8);
+      let uuid;
+      if (sessionStorage.getItem('userId')) {
+        uuid = sessionStorage.getItem('userId')
+      } else {
+        uuid = uuidv4();
+        sessionStorage.setItem('userId',uuid)
+      }
       const response = await fetch('http://localhost:5000/api/game/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          game: quizData,
+          game: {
+            questions:quizData,
+            document:documents,
+            ownerId: uuid
+          },
           gameId: code,
         }),
       });
 
       if (response.status === 200) {
-        sessionStorage.setItem('cachedGameId', code);
-        // If the response is OK, navigate to the game 
+        sessionStorage.setItem('gameId', code);
         window.location.href = `/game/${code}`; // Redirect to the game page
       } else {
         setErrorMessage('An error occurred. Please try again.');

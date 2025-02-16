@@ -107,8 +107,13 @@ app.post('/api/game/generate', upload.array('documents'), (req, res) => {
 });
 
 app.post('/api/game/create', (req, res) => {
-  const {game, gameId} = req.body;
-  const game_query = 'INSERT INTO game (questions, document, ownerId, gameId) values (?,?,?,?)';
+  const { game, gameId } = req.body;
+
+  // Log the incoming data
+  console.log('Game data:', game);
+  console.log('Game ID:', gameId);
+
+  const game_query = 'INSERT INTO game (questions, document, ownerId, code) values (?,?,?,?)';
 
   connection.execute(game_query, [game.questions, game.document, game.ownerId, gameId], (err, results) => {
   if (err) {
@@ -117,16 +122,16 @@ app.post('/api/game/create', (req, res) => {
   }
   console.log('yay');
   });
-  const questionOne = questions[0];
+  const questionOne = game.questions[0];
   const questionDisplay = {"text": questionOne.text, "options":questionOne.options}
-  const gameState_query = 'INSERT INTO gameState (questionIndex, userStates, ownerId, code, questionDisplay) values (0, {}, ?, ?, ?)';
-  connection.execute(gameState_query, [game.ownerId, gameId, questionDisplay], (err, results) => {
+  const gameState_query = 'INSERT INTO gameState (questionIndex, userStatuses, ownerId, code, questionDisplay, status) values (0, ?, ?, ?, ?, ?)';
+  connection.execute(gameState_query, [{},game.ownerId, gameId, questionDisplay, "idle"], (err, results) => {
   if (err) {
     console.error('Error checking data: ' + err.stack);
     return res.status(500).json({ error: 'Error checking data' });
   }
-    console.log('works');
-    res.status(200).json({ success: true });
+  console.log('works');
+  res.status(200).json({ success: true });
   });
 });
 
