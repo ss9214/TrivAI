@@ -137,14 +137,15 @@ app.post("/api/game/create", (req, res) => {
   );
   const questionOne = game.questions[0];
   const questionDisplay = {
-    text: questionOne.text,
+    text: questionOne.question,
     options: questionOne.options,
   };
+  console.log(questionDisplay);
   const gameState_query =
     "INSERT INTO gameState (questionIndex, userStatuses, ownerId, code, questionDisplay, status) values (0, ?, ?, ?, ?, ?)";
   connection.execute(
     gameState_query,
-    [JSON.stringify([]), game.ownerId, gameId, questionDisplay, "idle"],
+    [JSON.stringify([]), game.ownerId, gameId, JSON.stringify(questionDisplay), "idle"],
     (err, results) => {
       if (err) {
         console.error("Error checking data: " + err.stack);
@@ -274,6 +275,7 @@ app.post("/api/game/start", (req, res) => {
       gameState = results[0];
       gameState.userStatuses = Object.values(results[0].userStatuses) || [];
       gameState.status = "active";
+      console.log(gameState)
       res.status(200).json({ success: true, gameState: gameState }); // Return the game state
     } else {
       res.status(404).json({ success: false, message: "Game not found" }); // Handle case where game is not found
