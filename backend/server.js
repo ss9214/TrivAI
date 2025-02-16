@@ -294,6 +294,39 @@ app.post("/api/game/start", (req, res) => {
     }
   });
 });
+
+app.post("/api/game/end", (req, res) => {
+    const { gameId } = req.body;
+    const getGameStateQuery = "SELECT * FROM gameState WHERE code = ?"; // Query to get the game state
+    connection.execute(getGameStateQuery, [gameId], (err, results) => {
+      if (err) {
+        console.error("Error fetching game state: " + err.stack);
+        return res.status(500).json({ error: "Error fetching game state" });
+      }
+  
+      if (results.length > 0) {
+        gameState = results[0];
+        gameState.userStatuses = Object.values(results[0].userStatuses) || [];
+        gameState.status = "completed";
+        const updateGsQuery = "UPDATE gameState SET status = ? WHERE code = ?";
+        connection.execute(
+          updateGsQuery,
+          ["completed", gameId],
+          (err, updateResults) => {
+            if (err) {
+              console.error("Error updating data: " + err.stack);
+              return res.status(500).json({ error: "Error updating data" });
+            }
+          }
+        );
+        console.log(gameState)
+        res.status(200).json({ success: true, gameState: gameState }); // Return the game state
+      } else {
+        res.status(404).json({ success: false, message: "Game not found" }); // Handle case where game is not found
+      }
+    });
+  });
+
 app.post("/api/game/endQuestion", (req, res) => {
   const { gameId, correctAnswer } = req.body;
   const getAnswerQuery = "SELECT questions from game WHERE code = ?";
