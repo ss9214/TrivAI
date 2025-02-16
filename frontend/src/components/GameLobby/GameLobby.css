@@ -1,0 +1,6 @@
+.game-lobby {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 140px);
+  margin: 70px;
+}
