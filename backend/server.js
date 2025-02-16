@@ -125,7 +125,7 @@ app.post('/api/game/create', (req, res) => {
   const questionOne = game.questions[0];
   const questionDisplay = {"text": questionOne.text, "options":questionOne.options}
   const gameState_query = 'INSERT INTO gameState (questionIndex, userStatuses, ownerId, code, questionDisplay, status) values (0, ?, ?, ?, ?, ?)';
-  connection.execute(gameState_query, [{},game.ownerId, gameId, questionDisplay, "idle"], (err, results) => {
+  connection.execute(gameState_query, [JSON.stringify([]), game.ownerId, gameId, questionDisplay, "idle"], (err, results) => {
   if (err) {
     console.error('Error checking data: ' + err.stack);
     return res.status(500).json({ error: 'Error checking data' });
@@ -165,7 +165,7 @@ app.post('/api/game/join', (req, res) => {
       console.error('Error checking data: ' + err.stack);
       return res.status(500).json({ error: 'Error checking data' });
     }
-    let userStatuses = JSON.parse(results[0].userStatuses);
+    let userStatuses = results[0].userStatuses || [];
     userStatuses.push(userState);
     const updateQuery = "UPDATE gameState SET userStatuses = ? WHERE code = ?";
     connection.execute(updateQuery, [JSON.stringify(userStatuses), gameId], (err, updateResults) => {
@@ -188,7 +188,7 @@ app.post('/api/game/updateAnswer', (req, res) => {
       console.error('Error checking data: ' + err.stack);
       return res.status(500).json({ error: 'Error checking data' });
     }
-    let userStatuses = JSON.parse(results[0].userStatuses);
+    let userStatuses = results[0].userStatuses || [];
     const user = userStatuses.find(user => user.userId === userId);
     if (user) {
       user.answer = answer;
@@ -217,7 +217,8 @@ app.get('/api/game/gameState/:gameId', (req, res) => {
 
     if (results.length > 0) {
       gameState = results[0]
-      gameState.answers = JSON.parse(results[0].answers);
+      console.log(typeof(results[0].userStatuses))
+      gameState.userStatuses = results[0].userStatuses || [];
       res.status(200).json({ success: true, gameState: gameState }); // Return the game state
     } else {
       res.status(404).json({ success: false, message: 'Game not found' }); // Handle case where game is not found
@@ -236,7 +237,7 @@ app.post('/api/game/start', (req,res) => {
 
         if (results.length > 0) {
         gameState = results[0]
-        gameState.answers = JSON.parse(results[0].answers);
+        gameState.userStatuses = results[0].userStatuses || [];
         gameState.status = "active";
         res.status(200).json({ success: true, gameState: gameState }); // Return the game state
         } else {
