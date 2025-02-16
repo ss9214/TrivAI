@@ -216,7 +216,9 @@ app.get('/api/game/gameState/:gameId', (req, res) => {
     }
 
     if (results.length > 0) {
-      res.status(200).json({ success: true, gameState: results[0] }); // Return the game state
+      gameState = results[0]
+      gameState.answers = JSON.parse(results[0].answers);
+      res.status(200).json({ success: true, gameState: gameState }); // Return the game state
     } else {
       res.status(404).json({ success: false, message: 'Game not found' }); // Handle case where game is not found
     }
