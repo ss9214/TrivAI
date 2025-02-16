@@ -4,12 +4,14 @@ import Grid from "@mui/material/Grid2";
 import PeopleIcon from "@mui/icons-material/People";
 import "./GameLobby.css";
 import { useAppSelector } from "../../store/hooks";
-import { gameStateStart, getGameState } from "../../services";
+import { gameStateCancel, gameStateStart, getGameState } from "../../services";
 import { useDispatch } from "react-redux";
 import { setGameState } from "../../store/gameStateSlice";
+import { useNavigate } from "react-router-dom";
 
 function GameLobby() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const gameState = useAppSelector((state) => state.gameState);
   const gameId = sessionStorage.getItem("gameId");
 
@@ -30,6 +32,12 @@ function GameLobby() {
 
     return () => clearInterval(interval);
   }, []);
+
+  const cancelGame = async (gameId: string) => {
+    await gameStateCancel(gameId);
+    dispatch(setGameState(null));
+    navigate("/");
+  };
 
   const startGame = async (gameId: string) => {
     const data = await gameStateStart(gameId);
@@ -78,6 +86,7 @@ function GameLobby() {
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <Button
           variant="outlined"
+          onClick={() => gameId && cancelGame(gameId)}
           sx={{
             width: "140px",
             height: "52px",
