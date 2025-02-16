@@ -197,11 +197,7 @@ app.post("/api/game/join", (req, res) => {
     if (err) {
       console.error("Error checking data: " + err.stack);
       return res.status(500).json({ error: "Error checking data" });
-    } else if (results[0] == undefined) {
-        return res.status(500).json({ error: "Game does not exist" });
     }
-    console.log(results[0])
-    console.log(results[0].userStatuses)
     let userStatuses = Object.values(results[0].userStatuses) || [];
     userStatuses.push(userState);
     const updateQuery = "UPDATE gameState SET userStatuses = ? WHERE code = ?";
@@ -292,7 +288,7 @@ app.post("/api/game/updateQuestionIndex", (req, res) => {
         };
       });
       const updateQuery =
-        "UPDATE gameState SET (questionDisplay,questionIndex) = (?,?) WHERE code = ?";
+        "UPDATE gameState SET questionDisplay = ?, questionIndex = ? WHERE code = ?";
       connection.execute(
         updateQuery,
         [gameState.questionDisplay, gameState.questionIndex, gameId],
@@ -313,40 +309,65 @@ app.post("/api/game/updateQuestionIndex", (req, res) => {
 
 app.post("/api/game/updateCorrectAnswer", (req, res) => {
   const { gameId } = req.body;
-  const getGameStateQuery = "SELECT * FROM gameState WHERE code = ?"; // Query to get the game state
+
+  // First, get the current game state
+  const getGameStateQuery = "SELECT * FROM gameState WHERE code = ?";
   connection.execute(getGameStateQuery, [gameId], (err, results) => {
     if (err) {
-      console.error("Error fetching game state: " + err.stack);
+      console.error("Error fetching game state:", err);
       return res.status(500).json({ error: "Error fetching game state" });
     }
+    if (!results || results.length === 0) {
+      return res.status(404).json({ error: "Game state not found" });
+    }
+
     const gameState = results[0];
-    const correctAnswer = gameState.correctAnswer;
-    let newAnswer;
-    if (correctAnswer !== undefined) {
-      newAnswer = undefined;
-      gameState.correctAnswer = undefined;
+
+    // If a correct answer already exists, we clear it by setting it to null.
+    if (gameState.correctAnswer !== null) {
+      const clearAnswerQuery =
+        "UPDATE gameState SET correctAnswer = ? WHERE code = ?";
+      connection.execute(
+        clearAnswerQuery,
+        [null, gameId],
+        (err, updateResults) => {
+          if (err) {
+            console.error("Error updating game state:", err);
+            return res.status(500).json({ error: "Error updating game state" });
+          }
+          gameState.correctAnswer = null;
+          return res.status(200).json({ success: true, data: gameState });
+        }
+      );
     } else {
+      // Otherwise, get the game details to set the correct answer
       const getGameQuery = "SELECT * FROM game WHERE code = ?";
       connection.execute(getGameQuery, [gameId], (err, gameResults) => {
         if (err) {
-          console.error("Error fetching game state: " + err.stack);
-          return res.status(500).json({ error: "Error fetching game state" });
-        } else {
-          newAnswer = gameResults[0].questions[index].correctAnswer;
-          gameState.correctAnswer = newAnswer;
+          console.error("Error fetching game:", err);
+          return res.status(500).json({ error: "Error fetching game" });
         }
+
+        const newAnswer =
+          gameResults[0].questions[gameState.questionIndex].correctAnswer;
+        const setAnswerQuery =
+          "UPDATE gameState SET correctAnswer = ? WHERE code = ?";
+        connection.execute(
+          setAnswerQuery,
+          [newAnswer, gameId],
+          (err, updateResults) => {
+            if (err) {
+              console.error("Error updating game state:", err);
+              return res
+                .status(500)
+                .json({ error: "Error updating game state" });
+            }
+            gameState.correctAnswer = newAnswer;
+            return res.status(200).json({ success: true, data: gameState });
+          }
+        );
       });
     }
-    const setAnswerQuery =
-      "UPDATE gameState SET correctAnswer = $ WHERE code = $";
-    connection.execute(setAnswerQuery, [newAnswer, gameId], (err, results) => {
-      if (err) {
-        console.error("Error fetching game state: " + err.stack);
-        return res.status(500).json({ error: "Error fetching game state" });
-      } else {
-        return res.status(200).json({ success: true, data: gameState });
-      }
-    });
   });
 });
 
@@ -441,54 +462,64 @@ app.post("/api/game/endQuestion", (req, res) => {
       return res.status(500).json({ error: "Error updating data" });
     }
     const getGameStateQuery = "SELECT * from gameState WHERE code = ?";
-    connection.execute(getGameStateQuery, [gameId],(err,results2) => {
-        if (err) {
-            console.error("Error updating data: " + err.stack);
-            return res.status(500).json({ error: "Error updating data" });
-        }
-        let gameState = results2[0]
-        let questions = JSON.parse(results[0]);
-        let correctAnswerIndex = questions[gameState.questionIndex].correctAnswer;
+    connection.execute(getGameStateQuery, [gameId], (err, results2) => {
+      if (err) {
+        console.error("Error updating data: " + err.stack);
+        return res.status(500).json({ error: "Error updating data" });
+      }
+      let gameState = results2[0];
+      let questions = results[0].questions;
+      let correctAnswerIndex = questions[gameState.questionIndex].correctAnswer;
 
-        let correctPlayers = [];
+      let correctPlayers = [];
 
-        let userStates = gameState.userStatuses.map((user) => {
-            if (user.answer != correctAnswerIndex) {
-            user.lifePoints -= 1000;
-            } else {
-            correctPlayers.append(user);
-            }
-        });
-        correctPlayers.sort((a, b) => a.answerTime - b.answerTime);
-        const numPlayers = userStates.length(); //HERE
-        for (let i = 0; i < correctPlayers.length(); i++) {
-            let user = userStates.find(
-            (user) => user.name === correctPlayers[i].name
-            );
-            user.lifePoints =
-            user.lifePoints - 500 * float((i - 1) / (numPlayers - 1));
+      let userStates = gameState.userStatuses.map((user) => {
+        if (user.answer != correctAnswerIndex) {
+          user.lifePoints -= 1000;
+        } else {
+          correctPlayers.append(user);
         }
-        userStates.sort((a, b) => a.lifePoints - b.lifePoints);
-        for (let j = 0; j < userStates.length(); j++) {
-            userStates[j].rank = j + 1;
-        }
-        gameState.userStatuses = userStates;
-        gameState.questionIndex += 1;
-        gameState.questionDisplay = {"text":questions[gameState.questionIndex].text, "options":questions[gameState.questionIndex].options}
-        const updateQuery =
-        "UPDATE gameState SET (questionDisplay,questionIndex) = (?,?) WHERE code = ?";
-        connection.execute(
-            updateQuery,
-            [gameState.questionDisplay, gameState.questionIndex, gameId],
-            (err, results3) => {
-                if (err) {
-                    console.error("Error fetching game state: " + err.stack);
-                    return res.status(500).json({ error: "Error fetching game state" });
-                }
-            }
+        return user;
+      });
+      correctPlayers.sort((a, b) => a.answerTime - b.answerTime);
+      const numPlayers = userStates.length; //HERE
+      for (let i = 0; i < correctPlayers.length; i++) {
+        let user = userStates.find(
+          (user) => user.name === correctPlayers[i].name
         );
-        return { correctAnswer: correctAnswer, gameState: gameState };
-    })
+        user.lifePoints =
+          user.lifePoints - 500 * float((i - 1) / (numPlayers - 1));
+      }
+      userStates.sort((a, b) => a.lifePoints - b.lifePoints);
+      for (let j = 0; j < userStates.length; j++) {
+        userStates[j].rank = j + 1;
+      }
+      gameState.userStatuses = userStates;
+      gameState.questionIndex += 1;
+      if (questions.length <= gameState.questionIndex) {
+        return {
+          correctAnswer: null,
+          gameState: { ...gameState, options: null, status: "completed" },
+        };
+      }
+      gameState.questionDisplay = {
+        text: questions[gameState.questionIndex].question,
+        options: questions[gameState.questionIndex].options,
+      };
+      const updateQuery =
+        "UPDATE gameState SET questionDisplay = ?, questionIndex = ? WHERE code = ?";
+      connection.execute(
+        updateQuery,
+        [gameState.questionDisplay, gameState.questionIndex, gameId],
+        (err, results3) => {
+          if (err) {
+            console.error("Error fetching game state: " + err.stack);
+            return res.status(500).json({ error: "Error fetching game state" });
+          }
+        }
+      );
+      return { correctAnswer: correctAnswerIndex, gameState: gameState };
+    });
   });
 });
 

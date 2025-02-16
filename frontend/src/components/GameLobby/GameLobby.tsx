@@ -3,7 +3,11 @@ import Grid from "@mui/material/Grid2";
 import PeopleIcon from "@mui/icons-material/People";
 import "./GameLobby.css";
 import { useAppSelector } from "../../store/hooks";
-import { gameStateCancel, gameStateStart } from "../../services";
+import {
+  gameStateCancel,
+  gameStateStart,
+  setCompletionTime,
+} from "../../services";
 import { useDispatch } from "react-redux";
 import { setGameState } from "../../store/gameStateSlice";
 import { useNavigate } from "react-router-dom";
@@ -21,6 +25,7 @@ function GameLobby() {
   };
 
   const startGame = async (gameId: string) => {
+    await setCompletionTime(gameId, new Date(Date.now() + 3000));
     const data = await gameStateStart(gameId);
     dispatch(setGameState(data.gameState));
   };

@@ -7,7 +7,7 @@ const api = axios.create({
 export const getGameState = async (gameId: string) => {
   try {
     const response = await api.get(`/game/gameState/${gameId}`);
-    return { ...response.data, completionTime: Date.now() + 3000 };
+    return response.data;
   } catch (error) {
     console.error("Error getting game state:", error);
     throw error;

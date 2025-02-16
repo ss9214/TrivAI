@@ -21,6 +21,7 @@ import {
   setCompletionTime,
   setCorrectAnswer,
 } from "../../services.ts";
+import { UserStatus } from "../../../../models/GameState.ts";
 
 function GamePage() {
   const dispatch = useDispatch();
@@ -66,12 +67,19 @@ function GamePage() {
 
     const checkGameStatus = () => {
       const now = Date.now();
-      const completionTimeMs = new Date(gameState.completionTime).getTime();
+      const completionTimeMs =
+        new Date(gameState.completionTime).getTime() - 18000000;
 
-      if (gameState.correctAnswer === undefined) {
-        if (now > completionTimeMs) {
+      console.log(now > completionTimeMs, now, completionTimeMs);
+      if (gameState.correctAnswer === null) {
+        if (
+          now > completionTimeMs ||
+          gameState.userStatuses.filter(
+            (userStatus: UserStatus) => userStatus.answer === null
+          ).length
+        ) {
           if (
-            gameState.questionDisplay.options === undefined ||
+            gameState.questionDisplay.options === null ||
             (lifePoints !== null && lifePoints <= 0)
           ) {
             if (gameId) {
@@ -84,7 +92,7 @@ function GamePage() {
               dispatch(
                 setGameState({
                   ...gameState,
-                  completionTime: now + 5000,
+                  completionTime: new Date(now + 5000).getTime(),
                 })
               );
             }
@@ -100,7 +108,7 @@ function GamePage() {
               setGameState({
                 ...gameState,
                 question_index: gameState.question_index + 1,
-                completionTime: now + 30000,
+                completionTime: new Date(now + 30000).getTime(),
               })
             );
           }
