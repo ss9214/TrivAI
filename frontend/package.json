@@ -16,15 +16,15 @@
     "@mui/icons-material": "^6.4.4",
     "@mui/material": "^6.4.4",
     "@mui/styled-engine-sc": "^6.4.3",
-    "child_process": "^1.0.2",
     "@reduxjs/toolkit": "^2.5.1",
+    "child_process": "^1.0.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.1.5",
+    "redux": "^5.0.1",
     "styled-components": "^6.1.15",
-    "uuid": "^11.0.5",
-    "redux": "^5.0.1"
+    "uuid": "^11.0.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",
