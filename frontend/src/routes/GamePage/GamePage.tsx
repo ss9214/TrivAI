@@ -14,7 +14,13 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../store/store.ts";
 import { getLifePoints } from "../../store/selectors.ts";
 import { setGameState } from "../../store/gameStateSlice.tsx";
-import { getGameState } from "../../services.ts";
+import {
+  gameStateEnd,
+  getGameState,
+  nextQuestion,
+  setCompletionTime,
+  setCorrectAnswer,
+} from "../../services.ts";
 
 function GamePage() {
   const dispatch = useDispatch();
@@ -25,23 +31,87 @@ function GamePage() {
     userId ? getLifePoints(userId)(state) : null
   );
   const isOwner = gameState && userId === gameState?.ownerId;
-  const correctAnswer = 0;
+
+  const endGame = async (gameId: string) => {
+    const data = await gameStateEnd(gameId);
+    dispatch(setGameState(data.gameState));
+  };
+
+  const fetchGameState = async () => {
+    if (!gameId) return;
+    try {
+      const data = await getGameState(gameId);
+      dispatch(setGameState(data.gameState));
+    } catch (error) {
+      console.error("Error fetching game state:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchGameData = async () => {
-      if (gameId) {
-        sessionStorage.setItem("gameId", gameId);
-        try {
-          const data = await getGameState(gameId);
-          dispatch(setGameState(data.gameState));
-        } catch (error) {
-          console.error("Failed to fetch game state:", error);
+    const interval = setInterval(() => {
+      fetchGameState();
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [
+    gameId,
+    gameState,
+    gameState?.question_index,
+    gameState?.correctAnswer,
+    dispatch,
+  ]);
+
+  useEffect(() => {
+    if (!gameState || !gameState.completionTime) return;
+
+    const checkGameStatus = () => {
+      const now = Date.now();
+      const completionTimeMs = new Date(gameState.completionTime).getTime();
+
+      if (gameState.correctAnswer === undefined) {
+        if (now > completionTimeMs) {
+          if (
+            gameState.questionDisplay.options === undefined ||
+            (lifePoints !== null && lifePoints <= 0)
+          ) {
+            if (gameId) {
+              endGame(gameId);
+            }
+          } else {
+            if (gameId) {
+              setCorrectAnswer(gameId);
+              setCompletionTime(gameId, new Date(now + 5000));
+              dispatch(
+                setGameState({
+                  ...gameState,
+                  completionTime: now + 5000,
+                })
+              );
+            }
+          }
+        }
+      } else {
+        if (now > completionTimeMs) {
+          if (gameId) {
+            setCorrectAnswer(gameId);
+            nextQuestion(gameId);
+            setCompletionTime(gameId, new Date(now + 30000));
+            dispatch(
+              setGameState({
+                ...gameState,
+                question_index: gameState.question_index + 1,
+                completionTime: now + 30000,
+              })
+            );
+          }
         }
       }
     };
 
-    fetchGameData();
-  }, [dispatch, gameId]);
+    checkGameStatus();
+    const timer = setInterval(checkGameStatus, 1000);
+    return () => clearInterval(timer);
+  }, [gameState, lifePoints, dispatch]);
 
   return (
     gameState &&
@@ -54,7 +124,7 @@ function GamePage() {
         gameState && (
           <Game
             question={gameState.questionDisplay}
-            correctAnswer={correctAnswer}
+            correctAnswer={gameState.correctAnswer}
           />
         )
       )
@@ -62,8 +132,8 @@ function GamePage() {
       (lifePoints != null && lifePoints <= 0) ? (
       <UserEnd />
     ) : gameState.status === "active" ? (
-      correctAnswer !== undefined ? (
-        <QuestionResult correctAnswer={correctAnswer} />
+      gameState.correctAnswer !== undefined ? (
+        <QuestionResult correctAnswer={gameState.correctAnswer} />
       ) : (
         <GameOptions />
       )

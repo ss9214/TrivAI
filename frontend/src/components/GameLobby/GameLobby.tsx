@@ -1,10 +1,9 @@
-import { useEffect } from "react";
 import { Typography, Card, CardContent, Box, Button } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import PeopleIcon from "@mui/icons-material/People";
 import "./GameLobby.css";
 import { useAppSelector } from "../../store/hooks";
-import { gameStateCancel, gameStateStart, getGameState } from "../../services";
+import { gameStateCancel, gameStateStart } from "../../services";
 import { useDispatch } from "react-redux";
 import { setGameState } from "../../store/gameStateSlice";
 import { useNavigate } from "react-router-dom";
@@ -14,24 +13,6 @@ function GameLobby() {
   const navigate = useNavigate();
   const gameState = useAppSelector((state) => state.gameState);
   const gameId = sessionStorage.getItem("gameId");
-
-  const fetchGameState = async () => {
-    if (!gameId) return;
-    try {
-      const data = await getGameState(gameId);
-      dispatch(setGameState(data.gameState));
-    } catch (error) {
-      console.error("Error fetching game state:", error);
-    }
-  };
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchGameState();
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   const cancelGame = async (gameId: string) => {
     await gameStateCancel(gameId);

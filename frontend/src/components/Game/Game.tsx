@@ -8,7 +8,7 @@ function Game({
   correctAnswer,
 }: {
   question: QuestionDisplay;
-  correctAnswer: number;
+  correctAnswer?: number;
 }) {
   return (
     <div className="game">

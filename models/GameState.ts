@@ -1,11 +1,13 @@
 export type Status = "idle" | "active" | "completed";
 
 export interface GameState {
+  correctAnswer: number;
   question_index: number;
   questionDisplay: QuestionDisplay;
   userStatuses: UserStatus[];
   ownerId: string;
   status: Status;
+  completionTime: Date;
 }
 
 export interface QuestionDisplay {
@@ -19,5 +21,5 @@ export interface UserStatus {
   lifePoints: number;
   rank: number;
   answer: number;
-  answerTime:number;
+  answerTime: number;
 }
