@@ -27,7 +27,7 @@ const Router = createBrowserRouter([
         element: <GameJoinPage />,
       },
       {
-        path: "game/:id",
+        path: "game/:gameId",
         element: <GamePage />,
       },
       {

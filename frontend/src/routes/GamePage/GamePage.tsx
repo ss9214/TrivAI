@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { useParams } from "react-router-dom"; // Import useParams to get URL parameters
 import "./GamePage.css";
 import GameOptions from "../../components/GameOptions/GameOptions.tsx";
 import Game from "../../components/Game/Game.tsx";
@@ -10,15 +13,36 @@ import { useAppSelector } from "../../store/hooks.ts";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store.ts";
 import { getLifePoints } from "../../store/selectors.ts";
+import { setGameState } from "../../store/gameStateSlice.tsx";
+import { getGameState } from "../../services.ts";
 
 function GamePage() {
-  const userState = useAppSelector((state) => state.user);
+  const dispatch = useDispatch();
+  const gameId = useParams<{ gameId: string }>().gameId;
+  const userId = sessionStorage.getItem("userId");
   const gameState = useAppSelector((state) => state.gameState);
   const lifePoints = useSelector((state: RootState) =>
-    userState ? getLifePoints(userState.userId)(state) : null
+    userId ? getLifePoints(userId)(state) : null
   );
-  const isOwner = gameState && userState?.userId === gameState?.owner;
+
+  const isOwner = gameState && userId === gameState?.owner;
   const correctAnswer = 0;
+
+  useEffect(() => {
+    const fetchGameData = async () => {
+      if (gameId) {
+        sessionStorage.setItem("gameId", gameId);
+        try {
+          const data = await getGameState(gameId);
+          dispatch(setGameState(data));
+        } catch (error) {
+          console.error("Failed to fetch game state:", error);
+        }
+      }
+    };
+
+    fetchGameData();
+  }, [dispatch, gameId]);
 
   return (
     gameState &&

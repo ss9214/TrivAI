@@ -1,18 +1,17 @@
 import { Typography } from "@mui/material";
 import "./UserEnd.css";
-import { useAppSelector } from "../../store/hooks";
 import { getLifePoints, getRank } from "../../store/selectors";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store.ts"; // Import the RootState type
 
 function UserEnd() {
-  const userState = useAppSelector((state) => state.user);
+  const userId = sessionStorage.getItem("userId");
 
   const rank = useSelector((state: RootState) =>
-    userState ? getRank(userState.userId)(state) : null
+    userId ? getRank(userId)(state) : null
   );
   const lifePoints = useSelector((state: RootState) =>
-    userState ? getLifePoints(userState.userId)(state) : null
+    userId ? getLifePoints(userId)(state) : null
   );
 
   const nth = (d: number) => {
