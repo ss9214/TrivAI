@@ -19,15 +19,17 @@ function HomePage() {
       <div className="game-options">
         <div>
           <Button
-            variant="outlined"
+            variant="contained"
             className="game-button"
+            style={{backgroundColor:"#1e293b"}}
             onClick={toCreateJoin}
           >
             Create
           </Button>
           <Button
-            variant="outlined"
+            variant="contained"
             className="game-button"
+            style={{backgroundColor:"#1e293b"}}
             onClick={toGameJoin}
           >
             Join
