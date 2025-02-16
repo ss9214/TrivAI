@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { useParams } from "react-router-dom"; // Import useParams to get URL parameters
+import { useParams } from "react-router-dom";
 import "./GamePage.css";
 import GameOptions from "../../components/GameOptions/GameOptions.tsx";
 import Game from "../../components/Game/Game.tsx";

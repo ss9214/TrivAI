@@ -13,3 +13,13 @@ export const getGameState = async (gameId: string) => {
     throw error;
   }
 };
+
+export const gameStateStart = async (gameId: string) => {
+  try {
+    const response = await api.post("/game/start", { gameId });
+    return response.data;
+  } catch (error) {
+    console.error("Error starting game:", error);
+    throw error;
+  }
+};

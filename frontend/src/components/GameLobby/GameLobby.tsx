@@ -2,31 +2,20 @@ import { Typography, Card, CardContent, Box, Button } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import PeopleIcon from "@mui/icons-material/People";
 import "./GameLobby.css";
+import { useAppSelector } from "../../store/hooks";
+import { gameStateStart } from "../../services";
+import { useDispatch } from "react-redux";
+import { setGameState } from "../../store/gameStateSlice";
 
 function GameLobby() {
-  const players = [
-    "Alice",
-    "Bob",
-    "Charlie",
-    "David",
-    "Eve",
-    "Frank",
-    "Grace",
-    "Alice",
-    "Bob",
-    "Charlie",
-    "David",
-    "Eve",
-    "Frank",
-    "Grace",
-    "Alice",
-    "Bob",
-    "Charlie",
-    "David",
-    "Eve",
-    "Frank",
-  ];
-  const totalPlayers = players.length;
+  const dispatch = useDispatch();
+  const gameState = useAppSelector((state) => state.gameState);
+  const gameId = sessionStorage.getItem("gameId");
+
+  const startGame = async (gameId: string) => {
+    const data = await gameStateStart(gameId);
+    dispatch(setGameState(data.gameState));
+  };
 
   return (
     <div className="game-lobby">
@@ -41,7 +30,7 @@ function GameLobby() {
       >
         <PeopleIcon style={{ marginRight: "8px" }} />
         <Typography variant="h5" style={{ fontWeight: "700" }}>
-          Players {`(${totalPlayers})`}
+          Players {`(${gameState?.userStatuses.length})`}
         </Typography>
       </div>
       <Box
@@ -54,11 +43,11 @@ function GameLobby() {
         }}
       >
         <Grid container spacing={2}>
-          {players.map((player, index) => (
+          {gameState?.userStatuses.map((player, index) => (
             <Grid size={4} key={index}>
               <Card variant="outlined">
                 <CardContent>
-                  <Typography variant="h6">{player}</Typography>
+                  <Typography variant="h6">{player.name}</Typography>
                 </CardContent>
               </Card>
             </Grid>
@@ -80,6 +69,7 @@ function GameLobby() {
         </Button>
         <Button
           variant="outlined"
+          onClick={() => gameId && startGame(gameId)}
           sx={{
             width: "128px",
             height: "52px",
