@@ -37,7 +37,7 @@ class QuizGenerator:
                 {{
                     "text": "The question text",
                     "options": ["option1", "option2", "option3", "option4"],
-                    "answer": "The correct option"
+                    "answer": "The correct option's index"
                 }}
             ]
             Ensure the response is valid JSON that can be parsed directly.

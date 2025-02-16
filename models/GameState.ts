@@ -4,7 +4,7 @@ export interface GameState {
   question_index: number;
   questionDisplay: QuestionDisplay;
   userStatuses: UserStatus[];
-  owner: string;
+  ownerId: string;
   status: Status;
 }
 
@@ -18,10 +18,6 @@ export interface UserStatus {
   name: string;
   lifePoints: number;
   rank: number;
-  answer?: Answer;
-}
-
-export interface Answer {
-  choice: number;
-  timestamp: Date;
+  answer: number;
+  answerTime:number;
 }
