@@ -197,7 +197,11 @@ app.post("/api/game/join", (req, res) => {
     if (err) {
       console.error("Error checking data: " + err.stack);
       return res.status(500).json({ error: "Error checking data" });
+    } else if (results[0] == undefined) {
+        return res.status(500).json({ error: "Game does not exist" });
     }
+    console.log(results[0])
+    console.log(results[0].userStatuses)
     let userStatuses = Object.values(results[0].userStatuses) || [];
     userStatuses.push(userState);
     const updateQuery = "UPDATE gameState SET userStatuses = ? WHERE code = ?";
