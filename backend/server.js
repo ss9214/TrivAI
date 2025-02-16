@@ -326,6 +326,21 @@ app.post("/api/game/endQuestion", (req, res) => {
   });
 });
 
+app.post("/api/game/cancel", (req,res) => {
+    const { gameId } = req.body;
+    const updateQuery = "DELETE FROM gameState WHERE code = ?";
+    connection.execute(
+        updateQuery,
+        [gameId],
+        (err, results) => {
+          if (err) {
+            console.error("Error updating data: " + err.stack);
+            return res.status(500).json({ error: "Error updating data" });
+          }
+          return res.status(200).json({ success: true });
+        }
+      );
+})
 // app.post('/api/game/')
 
 app.listen(port, () => {
