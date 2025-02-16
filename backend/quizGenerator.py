@@ -73,7 +73,7 @@ class QuizGenerator:
                         formatted_questions.append({
                             'question': q['text'],
                             'options': q['options'],
-                            'correctAnswer': q['answer']
+                            'correctAnswer': int(q['answer'])
                         })
                 return formatted_questions
 
