@@ -4,7 +4,7 @@ export interface GameState {
   question_index: number;
   questionDisplay: QuestionDisplay;
   userStatuses: UserStatus[];
-  owner: string;
+  ownerId: string;
   status: Status;
 }
 

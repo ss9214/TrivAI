@@ -24,8 +24,7 @@ function GamePage() {
   const lifePoints = useSelector((state: RootState) =>
     userId ? getLifePoints(userId)(state) : null
   );
-
-  const isOwner = gameState && userId === gameState?.owner;
+  const isOwner = gameState && userId === gameState?.ownerId;
   const correctAnswer = 0;
 
   useEffect(() => {
@@ -34,7 +33,7 @@ function GamePage() {
         sessionStorage.setItem("gameId", gameId);
         try {
           const data = await getGameState(gameId);
-          dispatch(setGameState(data));
+          dispatch(setGameState(data.gameState));
         } catch (error) {
           console.error("Failed to fetch game state:", error);
         }
