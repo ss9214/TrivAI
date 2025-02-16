@@ -242,6 +242,98 @@ app.post("/api/game/updateAnswer", (req, res) => {
   });
 });
 
+app.post("/api/game/updateCompletionTime", (req, res) => {
+    const {gameId, completionTime } = req.body;
+      const updateQuery = "UPDATE gameState SET completionTime = ? WHERE code = ?";
+      connection.execute(
+        updateQuery,
+        [completionTime, gameId],
+        (err, updateResults) => {
+          if (err) {
+            console.error("Error updating data: " + err.stack);
+            return res.status(500).json({ error: "Error updating data" });
+          }
+          return res.status(200).json({ success: true });
+        }
+      );
+    });
+
+app.post("/api/game/updateQuestionIndex", (req, res) => {
+    const {gameId} = req.body;
+    const getGameStateQuery = "SELECT * FROM gameState WHERE code = ?"; // Query to get the game state
+    connection.execute(getGameStateQuery, [gameId], (err, results) => {
+      if (err) {
+        console.error("Error fetching game state: " + err.stack);
+        return res.status(500).json({ error: "Error fetching game state" });
+      }
+  
+      if (results.length > 0) {
+        gameState = results[0];
+        gameState.questionIndex++;
+        const getGameStateQuery = "SELECT * FROM game WHERE code = ?"; // Query to get the game state
+        connection.execute(getGameStateQuery, [gameId], (err, results) => {
+            if (err) {
+              console.error("Error fetching game state: " + err.stack);
+              return res.status(500).json({ error: "Error fetching game state" });
+            }
+            const question = results[0].questions[gameState.questionIndex];
+            gameState.questionDisplay = {"options":question.options, "text":question.text}
+        });
+        const updateQuery = "UPDATE gameState SET (questionDisplay,questionIndex) = (?,?) WHERE code = ?"
+        connection.execute(updateQuery, [gameState.questionDisplay,gameState.questionIndex,gameId], (err,results2) => {
+            if (err) {
+                console.error("Error fetching game state: " + err.stack);
+                return res.status(500).json({ error: "Error fetching game state" });
+              }
+        })
+        console.log(gameState);
+        res.status(200).json({ success: true, gameState: gameState }); // Return the game state
+      } else {
+        res.status(404).json({ success: false, message: "Game not found" }); // Handle case where game is not found
+      }
+    });
+    });
+
+app.post("/api/game/updateCorrectAnswer", (req, res) => {
+    const {gameId} = req.body;
+        const getGameStateQuery = "SELECT * FROM gameState WHERE code = ?"; // Query to get the game state
+        connection.execute(getGameStateQuery, [gameId], (err, results) => {
+            if (err) {
+              console.error("Error fetching game state: " + err.stack);
+              return res.status(500).json({ error: "Error fetching game state" });
+            }
+            const gameState = results[0];
+            const correctAnswer = gameState.correctAnswer;
+            let newAnswer;
+            if (correctAnswer !== undefined) {
+                newAnswer = undefined;
+                gameState.correctAnswer = undefined;
+            } else {
+                const getGameQuery = "SELECT * FROM game WHERE code = ?";
+                connection.execute(getGameQuery, [gameId], (err, gameResults) => {
+                    if (err) {
+                      console.error("Error fetching game state: " + err.stack);
+                      return res.status(500).json({ error: "Error fetching game state" });
+                    } else {
+                        newAnswer = gameResults[0].questions[index].correctAnswer;
+                        gameState.correctAnswer = newAnswer;
+                    }
+                    
+                })
+            }
+            const setAnswerQuery = "UPDATE gameState SET correctAnswer = $ WHERE code = $"
+                connection.execute(setAnswerQuery, [newAnswer,gameId], (err,results) => {
+                    if (err) {
+                        console.error("Error fetching game state: " + err.stack);
+                        return res.status(500).json({ error: "Error fetching game state" });
+                    } else {
+                        return res.status(200).json({'success':true,"data":gameState})
+                    }
+                })
+            
+        });
+    });
+
 app.get("/api/game/gameState/:gameId", (req, res) => {
   const gameId = req.params.gameId; // Get the gameId from the URL parameters
 
@@ -326,6 +418,8 @@ app.post("/api/game/end", (req, res) => {
       }
     });
   });
+
+  
 
 app.post("/api/game/endQuestion", (req, res) => {
   const { gameId, correctAnswer } = req.body;
